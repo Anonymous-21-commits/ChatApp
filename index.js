@@ -2,21 +2,25 @@ const express = require("express");
 const app = express();
 const http = require("http");
 const server = http.createServer(app);
-const { Server } = require("socket.io");
-const io = new Server(server);
-const connect = require("./config/database");
+const socketio = require("socket.io");
+const io = socketio(server);
 
-//listening to an emitted connection
 io.on("connection", (socket) => {
-  console.log("user connected " + socket.id);
+  console.log("user connected", socket.id);
+  setInterval(() => {
+    socket.emit("from_server");
+  }, 2000);
 
+  socket.on("from_client", () => {
+    console.log("event coming from client");
+  });
   socket.on("msg_send", (data) => {
-    io.emit("msg_rcvd", data);
+    console.log(data);
+    socket.broadcast.emit("msg_rcvd", data);
   });
 });
+
 app.use("/", express.static(__dirname + "/public"));
-server.listen(3000, async () => {
-  console.log("server started on", 3000);
-  await connect();
-  console.log("mongo-db connected");
+server.listen(3000, () => {
+  console.log("server started on Port 3000");
 });
